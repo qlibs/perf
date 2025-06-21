@@ -210,10 +210,18 @@
   >           median(perf::stat::top_down::backend_bound)
   >         ]);
   >
-  >         perf::annotate<perf::vsplit>(bench[perf::mc::address, perf::mc::assembly, perf::mc::latency, perf::mc::source]);
-  >         perf::annotate<perf::vsplit>(bench[perf::mc::assembly, perf::trace::instructions / perf::trace::cycles]);
-  >         perf::annotate<perf::vsplit>(bench[perf::mca::timeline, perf::mca::bottleneck]);
-  >         perf::annotate(bench[perf::mc::resource_pressure, perf::mca::assembly, perf::record::cycles]);
+  >         perf::annotate<perf::vsplit>(bench[
+  >           perf::mc::address, perf::mc::assembly, perf::mc::latency, perf::mc::source
+  >         ]);
+  >         perf::annotate<perf::vsplit>(bench[
+  >           perf::mc::assembly, perf::trace::instructions / perf::trace::cycles
+  >         ]);
+  >         perf::annotate<perf::vsplit>(bench[
+  >           perf::mca::timeline, perf::mca::bottleneck
+  >         ]);
+  >         perf::annotate(bench[
+  >           perf::mc::resource_pressure, perf::mca::assembly, perf::record::cycles
+  >         ]);
   >
   >         perf::plot::hist(bench[perf::time::cpu, perf::time::real]);
   >         perf::plot::har(bench[perf::stat::ipc]);
