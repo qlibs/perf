@@ -145,6 +145,7 @@
   >
   >     perf::report(bench[perf::time::steady_clock, perf::bench::operations]);
   >     perf::plot::bar(bench[perf::time::steady_clock]);
+  >     // perf::annotate(bench[perf::mc::assembly]);
   >   }
   >   ```
   >
