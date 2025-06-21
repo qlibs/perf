@@ -199,7 +199,7 @@
   >           max(perf::time::cpu / ops),
   >           mean(perf::stat::cache_miss_rate),
   >           mean(perf::stat::branch_miss_rate),
-  >           percentile{99}(perf::time::cpu / ops),
+  >           percentile<95>(perf::time::cpu / ops),
   >           median(perf::stat::instuctions / perf::stat::cycles),
   >           median(perf::stat::top_down::retiring),
   >           median(perf::stat::top_down::bad_speculation),
@@ -217,11 +217,12 @@
   >           perf::mca::timeline, perf::mca::bottleneck
   >         ]);
   >         perf::annotate(bench[
-  >           perf::mc::resource_pressure,  perf::mca::assembly, perf::record::cycles
+  >           perf::mc::resource_pressure, perf::mca::assembly, perf::record::cycles
   >         ]);
   >
   >         perf::plot::hist(bench[perf::time::cpu, perf::time::real]);
-  >         perf::plot::box(bench[perf::time::cpu, perf::stat::ipc]);
+  >         perf::plot::har(bench[perf::stat::ipc]);
+  >         perf::plot::box(bench[perf::time::cpu]);
   >         perf::plot::ecdf(bench[perf::time::cpu]);
   >         perf::plot::line(bench[perf::time::cpu]);
   >       }
