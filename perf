@@ -136,15 +136,14 @@
   >   }
   >
   >   int main() {
-  >     perf::runner bench{perf::bench::latency{}};
+  >     perf::runner bench{perf::bench::latency{.samples = 1u}};
   >
   >     bench(fizz_buzz, 15);
   >     bench(fizz_buzz, 3);
   >     bench(fizz_buzz, 5);
   >     bench(fizz_buzz, perf::data::unpredictable<int>{});
   >
-  >     perf::report(bench[perf::metric::median(perf::time::steady_clock), perf::bench::operations]);
-  >     perf::annotate(bench[perf::mc::assembly]);
+  >     perf::report(bench[perf::time::steady_clock, perf::bench::operations]);
   >     perf::plot::bar(bench[perf::time::steady_clock]);
   >   }
   >   ```
