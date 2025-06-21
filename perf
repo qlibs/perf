@@ -199,7 +199,7 @@
   >           max(perf::time::cpu / ops),
   >           mean(perf::stat::cache_miss_rate),
   >           mean(perf::stat::branch_miss_rate),
-  >           percentile(99)(perf::time::cpu / ops),
+  >           percentile{99}(perf::time::cpu / ops),
   >           median(perf::stat::instuctions / perf::stat::cycles),
   >           median(perf::stat::top_down::retiring),
   >           median(perf::stat::top_down::bad_speculation),
