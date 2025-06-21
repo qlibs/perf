@@ -136,14 +136,15 @@
   >   }
   >
   >   int main() {
-  >     perf::runner bench{perf::bench::latency{.samples = 1u}};
+  >     perf::runner bench{perf::bench::latency{}};
   >
   >     bench(fizz_buzz, 15);
   >     bench(fizz_buzz, 3);
   >     bench(fizz_buzz, 5);
   >     bench(fizz_buzz, perf::data::unpredictable<int>{});
   >
-  >     perf::report(bench[perf::time::steady_clock, perf::bench::operations]);
+  >     perf::report(bench[perf::metric::median(perf::time::steady_clock), perf::bench::operations]);
+  >     perf::annotate(bench[perf::mc::assembly]);
   >     perf::plot::bar(bench[perf::time::steady_clock]);
   >   }
   >   ```
@@ -221,12 +222,12 @@
   >           perf::trace::instructions / perf::trace::cycles
   >         ]);
   >         perf::annotate<perf::vsplit>(bench[
-  >           perf::mca::timeline
+  >           perf::mca::timeline,
   >           perf::mca::bottleneck
   >         ]);
   >         perf::annotate(bench[
-  >           perf::mc::resource_pressure
-  >           perf::mca::assembly
+  >           perf::mc::resource_pressure,
+  >           perf::mca::assembly,
   >           perf::record::cycles
   >         ]);
   >
