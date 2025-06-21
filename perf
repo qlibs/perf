@@ -164,8 +164,11 @@
   >       {"time", std::chrono::system_clock::now()},
   >       {"perf", perf::info::version()},
   >       {"sys",  perf::info::sys::triple()},
-  >       {"cxx",  std::format("{}-{}", perf::info::compiler::name(), perf::info::compiler::version())},
-  >       {"cpu",  std::format("{} ({}:{})", perf::info::cpu::name(), perf::info::cpu::code_name(), perf::info::cpu::version())},
+  >       {"cxx",  std::format("{}-{}",      perf::info::compiler::name(),
+  >                                          perf::info::compiler::version())},
+  >       {"cpu",  std::format("{} ({}:{})", perf::info::cpu::name(),
+  >                                          perf::info::cpu::code_name(),
+  >                                          perf::info::cpu::version())},
   >       {"iL1",  perf::info::memory::icache()[perf::info::memory::level::L1]},
   >       {"dL1",  perf::info::memory::dcache()[perf::info::memory::level::L1]},
   >       // ...
@@ -207,18 +210,10 @@
   >           median(perf::stat::top_down::backend_bound)
   >         ]);
   >
-  >         perf::annotate<perf::vsplit>(bench[
-  >           perf::mc::address, perf::mc::assembly, perf::mc::latency, perf::mc::source
-  >         ]);
-  >         perf::annotate<perf::vsplit>(bench[
-  >           perf::mc::assembly, perf::trace::instructions / perf::trace::cycles
-  >         ]);
-  >         perf::annotate<perf::vsplit>(bench[
-  >           perf::mca::timeline, perf::mca::bottleneck
-  >         ]);
-  >         perf::annotate(bench[
-  >           perf::mc::resource_pressure, perf::mca::assembly, perf::record::cycles
-  >         ]);
+  >         perf::annotate<perf::vsplit>(bench[perf::mc::address, perf::mc::assembly, perf::mc::latency, perf::mc::source]);
+  >         perf::annotate<perf::vsplit>(bench[perf::mc::assembly, perf::trace::instructions / perf::trace::cycles]);
+  >         perf::annotate<perf::vsplit>(bench[perf::mca::timeline, perf::mca::bottleneck]);
+  >         perf::annotate(bench[perf::mc::resource_pressure, perf::mca::assembly, perf::record::cycles]);
   >
   >         perf::plot::hist(bench[perf::time::cpu, perf::time::real]);
   >         perf::plot::har(bench[perf::stat::ipc]);
