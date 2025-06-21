@@ -136,7 +136,7 @@
   >   }
   >
   >   int main() {
-  >     perf::runner bench{perf::bench::latency{.samples = 1}};
+  >     perf::runner bench{perf::bench::latency{.samples = 1u}};
   >
   >     bench(fizz_buzz, 15);
   >     bench(fizz_buzz, 3);
@@ -6338,9 +6338,21 @@ namespace perf::inline PERF_IMPL_EVAL(PERF_IMPL_VERSION PERF) {
                   return runners(fn, ts...);
                 }
               }());
+            } else if constexpr (requires { runners.template operator()<ops>(fn, ts...); }) {
+              if constexpr (std::ranges::range<decltype(runners.template operator()<ops>(fn, ts...))>) {
+                for (auto&& data : runners.template operator()<ops>(fn, ts...)) {
+                  metadata_.emplace(TName{data, fn, ts...}, std::move(data));
+                }
+              } else {
+                runners.template operator()<ops>(fn, ts...);
+              }
             } else {
-              for (auto&& data : runners.template operator()<ops>(fn, ts...)) {
-                metadata_.emplace(TName{data, fn, ts...}, std::move(data));
+              if constexpr (std::ranges::range<decltype(runners(fn, ts...))>) {
+                for (auto&& data : runners(fn, ts...)) {
+                  metadata_.emplace(TName{data, fn, ts...}, std::move(data));
+                }
+              } else {
+                runners(fn, ts...);
               }
             }
           }(), ...);
@@ -6524,36 +6536,44 @@ namespace perf::inline PERF_IMPL_EVAL(PERF_IMPL_VERSION PERF) {
 
         const auto iterations = [&] {
           auto&& iterations = this->iterations;
-          if (iterations.time_budget and iterations.min) {
-            using perf::metric::operator*;
-            const auto& time = *bench(*iterations.min, time::timer{time::steady_clock}, fn, ts...)[] / *iterations.min;
-            const auto n = (std::chrono::duration_cast<std::chrono::nanoseconds>(*iterations.time_budget) / time).count();
-            return std::max(*iterations.min, std::size_t(n));
+          if constexpr (requires { *iterations.time_budget; *iterations.min; *iterations.max; }) {
+            if (iterations.time_budget and iterations.min) {
+              using perf::metric::operator*;
+              const auto& time = *bench(*iterations.min, time::timer{time::steady_clock}, fn, ts...)[] / *iterations.min;
+              const auto n = (std::chrono::duration_cast<std::chrono::nanoseconds>(*iterations.time_budget) / time).count();
+              return std::max(*iterations.min, std::size_t(n));
+            } else {
+              verify(iterations.max.has_value());
+              return *iterations.max;
+            }
           } else {
-            verify(iterations.max.has_value());
-            return *iterations.max;
+            return iterations;
           }
         }();
 
         const auto samples = [&] {
           auto&& samples = this->samples;
-          if (samples.confidence_level and samples.min and samples.max) {
-            using perf::metric::operator*;
+          if constexpr (requires { *samples.confidence_level and *samples.min and *samples.max; }) {
+            if (samples.confidence_level and samples.min and samples.max) {
+              using perf::metric::operator*;
 
-            for (auto i = 0u; i < *samples.min; ++i) {
-              data += bench<false>(iterations, t, fn, ts...)[];
-              //data -= bench(iterations, t, utility::overhead(fn), ts...);
-              data -= bench<true>(iterations, t, fn, ts...)[];
+              for (auto i = 0u; i < *samples.min; ++i) {
+                data += bench<false>(iterations, t, fn, ts...)[];
+                //data -= bench(iterations, t, utility::overhead(fn), ts...);
+                data -= bench<true>(iterations, t, fn, ts...)[];
+              }
+
+              const auto& time = *data[time::steady_clock];
+              const auto degrees_of_freedom = *samples.min - 1u;
+              const auto t_score = metric::stat::t_score(*samples.confidence_level, degrees_of_freedom);
+              const auto margin_of_error = (1. - *samples.confidence_level) * metric::stat::mean(time);
+              return std::min(std::size_t(std::ceil(std::pow((t_score * metric::stat::stddev(time)) / margin_of_error, 2.)) - *samples.min), *samples.max);
+            } else {
+              verify(samples.max.has_value());
+              return *samples.max;
             }
-
-            const auto& time = *data[time::steady_clock];
-            const auto degrees_of_freedom = *samples.min - 1u;
-            const auto t_score = metric::stat::t_score(*samples.confidence_level, degrees_of_freedom);
-            const auto margin_of_error = (1. - *samples.confidence_level) * metric::stat::mean(time);
-            return std::min(std::size_t(std::ceil(std::pow((t_score * metric::stat::stddev(time)) / margin_of_error, 2.)) - *samples.min), *samples.max);
           } else {
-            verify(samples.max.has_value());
-            return *samples.max;
+            return samples;
           }
         }();
 
@@ -7002,19 +7022,13 @@ namespace perf::inline PERF_IMPL_EVAL(PERF_IMPL_VERSION PERF)::inline io {
       for (const auto& [_, data] : results) {
         const auto size = values.size();
         std::apply([&]<class... Ts>(const Ts&... ts) {
-          ([&] {
-            if constexpr (requires { []<class T>(std::array<T, 1u>&&){}(ts); }) {
-              values.push_back({ts[0u]...});
-            } else {
-              constexpr auto get = []<class T>(const T& t, const auto i) {
-                return t.size() > i ? std::optional(t[i]) : std::optional<typename T::value_type>{};
-              };
-              const auto max = std::max({ts.size()...});
-              for (auto i = 0u; i < max; ++i) {
-                values.push_back({get(ts, i)...});
-              }
-            }
-          }(), ...);
+          constexpr auto get = []<class T>(const T& t, const auto i) {
+            return t.size() > i ? std::optional(t[i]) : std::optional<typename T::value_type>{};
+          };
+          const auto max = std::max({ts.size()...});
+          for (auto i = 0u; i < max; ++i) {
+            values.push_back({get(ts, i)...});
+          }
         }, data);
         indexes.push_back({size, values.size() - size});
       }
@@ -7596,6 +7610,9 @@ namespace perf::inline PERF_IMPL_EVAL(PERF_IMPL_VERSION PERF)::inline io {
 
       constexpr auto width = .75; // todo cfg
       constexpr auto error = [](const auto& data) {
+        if (data.size() == 1u) {
+          return std::array<double, 3u>{data[0u], data[0u], data[0u]};
+        }
         const auto mean = perf::metric::stat::mean(data);
         std::vector<double> gtm{};
         std::vector<double> ltm{};
@@ -7605,7 +7622,11 @@ namespace perf::inline PERF_IMPL_EVAL(PERF_IMPL_VERSION PERF)::inline io {
         std::copy_if(data.begin(), data.end(), std::back_inserter(ltm), [&](const auto& value) {
           return value < mean;
         });
-        return std::array<double, 3u>{mean, mean + perf::metric::stat::stddev(gtm), mean - perf::metric::stat::stddev(ltm)};
+        return std::array<double, 3u>{
+          mean,
+          mean + perf::metric::stat::stddev(gtm),
+          mean - perf::metric::stat::stddev(ltm)
+        };
       };
 
       const auto labels = std::apply([](const auto&... ts) {
