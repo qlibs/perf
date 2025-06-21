@@ -119,7 +119,7 @@
   >
   >   ```cpp
   >   /**
-  >    * Benchmarking (Miniaml)
+  >    * Benchmarking (Minimal)
   >    */
   >   import perf; // #include <perf>
   >
@@ -192,17 +192,33 @@
   >         auto ops = perf::bench::operations;
   >         auto throughput = seconds(time::cpu) / ops;
   >
-  >         perf::report(bench[throughput]);
-  >         perf::report(bench[median(perf::mca::cycles / ops), median(perf::stat::cycles / ops)]);
-  >         perf::report(bench[median(perf::time::cpu / ops), percentile(99)(perf::time::cpu / ops),]);
-  >         perf::report(bench[max(perf::stat::cache_miss_rate), max(perf::stat::branch_miss_rate)]);
-  >         perf::report(bench[median(perf::stat::instuctions / perf::stat::cycles)]);
-  >         perf::report(bench[median(perf::stat::top_down::retiring), median(perf::stat::top_down::bad_speculation), median(perf::stat::top_down::frontend_bound), median(perf::stat::top_down::backend_bound)]);
+  >         perf::report(bench[
+  >           median(throughput),
+  >           median(perf::mca::cycles / ops),
+  >           median(perf::stat::cycles / ops),
+  >           max(perf::time::cpu / ops),
+  >           mean(perf::stat::cache_miss_rate),
+  >           mean(perf::stat::branch_miss_rate),
+  >           percentile(99)(perf::time::cpu / ops),
+  >           median(perf::stat::instuctions / perf::stat::cycles),
+  >           median(perf::stat::top_down::retiring),
+  >           median(perf::stat::top_down::bad_speculation),
+  >           median(perf::stat::top_down::frontend_bound),
+  >           median(perf::stat::top_down::backend_bound)
+  >         ]);
   >
-  >         perf::annotate<perf::vsplit>(bench[perf::mc::address, perf::mc::assembly, perf::mc::latency, perf::mc::source]);
-  >         perf::annotate<perf::vsplit>(bench[perf::mc::assembly, perf::trace::instructions / perf::trace::cycles]);
-  >         perf::annotate<perf::vsplit>(bench[perf::mca::timeline, perf::mca::bottleneck]);
-  >         perf::annotate(bench[perf::mc::resource_pressure, perf::mca::assembly, perf::record::cycles]);
+  >         perf::annotate<perf::vsplit>(bench[
+  >           perf::mc::address, perf::mc::assembly, perf::mc::latency, perf::mc::source
+  >         ]);
+  >         perf::annotate<perf::vsplit>(bench[
+  >           perf::mc::assembly, perf::trace::instructions / perf::trace::cycles
+  >         ]);
+  >         perf::annotate<perf::vsplit>(bench[
+  >           perf::mca::timeline, perf::mca::bottleneck
+  >         ]);
+  >         perf::annotate(bench[
+  >           perf::mc::resource_pressure,  perf::mca::assembly, perf::record::cycles
+  >         ]);
   >
   >         perf::plot::hist(bench[perf::time::cpu, perf::time::real]);
   >         perf::plot::box(bench[perf::time::cpu, perf::stat::ipc]);
