@@ -6885,6 +6885,24 @@ struct std::formatter<perf::info::spec> {
   }
 };
 
+template<>
+struct std::formatter<perf::info::memory::level>
+{
+  [[nodiscard]] constexpr auto parse(auto &ctx) { return ctx.begin(); }
+  [[nodiscard]] constexpr auto format(const perf::info::memory::level &t, auto &ctx) const {
+    using perf::info::memory::level;
+
+    switch (t) {
+      case level::L0: return std::format_to(ctx.out(), "L0");
+      case level::L1: return std::format_to(ctx.out(), "L1");
+      case level::L2: return std::format_to(ctx.out(), "L2");
+      case level::L3: return std::format_to(ctx.out(), "L3");
+      case level::L4: return std::format_to(ctx.out(), "L4");
+      default: std::unreachable();
+    }
+  }
+};
+
 #if PERF_LLVM == 1
 template<>
 struct std::formatter<perf::mca::assembly::value_type> {
